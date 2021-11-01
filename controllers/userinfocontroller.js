@@ -8,7 +8,8 @@ router.post('/post', validateSession, (req, res) => {
         name: req.body.info.name,
         about: req.body.info.about,
         links: req.body.info.links,
-        owner: req.user.id
+        owner: req.user.id,
+        userId: req.user.id
     }
     Info.create(InfoPost)
     .then(image => res.status(200).json(image))
@@ -22,6 +23,19 @@ router.get("/", (req,res) => {
     .then(infoPosts => res.status(200).json(infoPosts))
     .catch(err => res.status(500).json({error: err}))
 });
+
+router.get("/getmyinfo", validateSession, function(req, res){
+    const query = {
+     where: {
+         userId: req.user.id
+    },  
+     include: "user",
+    };
+  
+    Info.findAll(query)
+      .then((infoPosts)=> res.status(200).json(infoPosts))
+      .catch((err) => res.status(500).json({error: err}));
+  });
 
 router.get("/mybio", validateSession, (req,res) => {
     let userid = req.user.id
@@ -37,7 +51,8 @@ router.put('/update/:entryId', validateSession, function(req, res) {
         name: req.body.info.name,
         about: req.body.info.about,
         links: req.body.info.links,
-        owner: req.user.id
+        owner: req.user.id,
+        userId: req.user.id
 
     };
 

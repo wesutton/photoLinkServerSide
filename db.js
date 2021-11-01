@@ -12,4 +12,22 @@ sequelize.authenticate().then(
         console.log(err);
     }
 );
+
+User = sequelize.import("./models/user");
+Image = sequelize.import("./models/image");
+UserInfo = sequelize.import('./models/userinfo');
+Review = sequelize.import('./models/review')
+
+User.hasMany(Image);
+Image.belongsTo(User);
+
+User.hasOne(UserInfo);
+UserInfo.belongsTo(User);
+
+User.hasMany(Review);
+Review.belongsTo(User);
+
+Image.hasMany(Review);
+Review.belongsTo(Image); // work in progress
+
 module.exports = sequelize;
