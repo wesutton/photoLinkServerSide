@@ -1,10 +1,14 @@
 module.exports = (sequelize, DataTypes) => {
     const Image = sequelize.define('image', {
-        title: {
+        name: {
             type: DataTypes.STRING,
-            allowNull: true,
+            allowNull: false,
         },
-        imageUrl: {
+        avatar: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
+        cloudinary_id: {
             type: DataTypes.STRING,
             allowNull: false
         },
