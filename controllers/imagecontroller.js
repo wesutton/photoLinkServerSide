@@ -101,7 +101,17 @@ router.put("/edit/:id", upload.single("image"), async (req, res) => {
         console.log(err);
     }
 })
-  
+
+router.get("/:id", validateSession, async (req, res) => {
+    try {
+        let image = await Image.findByPk(req.params.id);
+        res.json(image);
+    }catch (err) {
+        console.log(err);
+    }
+})
+
+
 
 // router.put('/update/:entryId', validateSession, function(req, res) {
 //     const updateImagePost = {

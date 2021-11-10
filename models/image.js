@@ -18,5 +18,11 @@ module.exports = (sequelize, DataTypes) => {
         }
         
     })
+
+    Image.associate = (models) => {
+        Image.hasMany(models.Review, {
+            onDelete: "cascade",
+        });
+    }
     return Image;
 }
