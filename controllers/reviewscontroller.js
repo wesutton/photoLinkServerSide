@@ -21,11 +21,12 @@ router.post('/post', validateSession, (req, res) => {
     .catch(err => res.status(500).json({ error: err}))
 });
 
-router.post("/", async (req, res)=> {
+router.post("/", validateSession, async (req, res, err)=> {
     const review = req.body.review;
     await Review.create(review);
     res.json(review)
-})
+    res.status(500).json({error: err})
+}) 
 
 
 router.get("/", (req,res) => {
@@ -42,7 +43,7 @@ router.get("/myreview", validateSession, function(req, res){
      where: {
          userId: req.user.id
     },  
-     include: "user",
+     include: "image"
     };
   
     Review.findAll(query)
@@ -50,11 +51,28 @@ router.get("/myreview", validateSession, function(req, res){
       .catch((err) => res.status(500).json({error: err}));
   });
 
+
+
   router.get("/:imageId", async (req, res) => {
       const imageId = req.params.imageId;
       const reviews = await Review.findAll({where: {imageId: imageId}, include: "user"} );
       res.json(reviews);
   })
+
+  router.get("/myreview/:id", validateSession, async (req, res) => {
+    try {
+        let review = await Review.findByPk(req.params.id);
+        res.json(review);
+    }catch (err) {
+        res.status(500).json({error: err})
+    }
+})
+
+router.get("/myreviews/:reviewId", async (req, res) => {
+    const id = req.params.id;
+    const reviews = await Review.findByPk({where: {id: id}, include: "user"} );
+    res.json(reviews);
+})
 
 router.put('/update/:entryId', validateSession, function(req, res) {
     const updateReview = {

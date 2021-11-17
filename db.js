@@ -28,6 +28,6 @@ User.hasMany(Review);
 Review.belongsTo(User);
 
 Image.hasMany(Review);
-Review.belongsTo(Image); // work in progress
+Review.belongsTo(Image); 
 
 module.exports = sequelize;

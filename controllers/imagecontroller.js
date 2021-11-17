@@ -76,7 +76,7 @@ router.get("/myposts", validateSession, function(req, res){
      where: {
          userId: req.user.id
     },  
-     include: "user",
+     include: "user"
     };
   
     Image.findAll(query)
@@ -89,11 +89,14 @@ router.put("/edit/:id", upload.single("image"), async (req, res) => {
         let image = await Image.findByPk(req.params.id);
 
         await cloudinary.uploader.destroy(image.cloudinary_id);
-        const result = await cloudinary.uploader.upload(req.file.path);
+        let result
+        if(req.file){
+            result = await cloudinary.uploader.upload(req.file.path);
+        }
         const data = {
             name: req.body.name || image.name,
-            avatar: result.secure_url || image.avatar,
-            cloudinary_id: result.public_id || image.cloudinary_id,
+            avatar: result?.secure_url || image.avatar,
+            cloudinary_id: result?.public_id || image.cloudinary_id,
         };
         image = await Image.update(data, {where: {id: req.params.id}}, {new: true});
         res.json(image);
@@ -107,7 +110,7 @@ router.get("/:id", validateSession, async (req, res) => {
         let image = await Image.findByPk(req.params.id);
         res.json(image);
     }catch (err) {
-        console.log(err);
+        res.status(500).json({error: err})
     }
 })
 

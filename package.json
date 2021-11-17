@@ -14,14 +14,21 @@
     "nodemon": "^2.0.14"
   },
   "dependencies": {
+    "@admin-bro/express": "^3.1.0",
+    "@admin-bro/sequelize": "^1.2.1",
+    "admin-bro": "^4.0.1",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^1.27.1",
     "dotenv": "^8.0.0",
     "express": "^4.17.1",
+    "express-formidable": "^1.2.0",
+    "express-session": "^1.17.2",
     "jsonwebtoken": "^8.5.1",
     "multer": "^1.4.3",
     "pg": "^8.5.1",
     "pg-hstore": "^2.3.3",
-    "sequelize": "^5.21.1"
+    "sequelize": "^5.21.1",
+    "session": "^0.1.0",
+    "tslib": "^2.3.1"
   }
 }
