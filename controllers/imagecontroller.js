@@ -1,49 +1,65 @@
 let express = require('express');
 const Image = require('../db').import('../models/image')
-const cloudinary = require('cloudinary');
+const cloudinary = require('../utils/cloudinary');
+const upload = require("../utils/multer");
 let router = express.Router();
 let validateSession = require('../middleware/validate-session');
 
-router.get('/cloudsign', validateSession, async (req, res) => {
+
+router.post('/post', validateSession, upload.single('image'), async(req, res) => {
     try{
-        const ts = Math.floor(new Date().getTime() / 1000).toString()
+        const result = await cloudinary.uploader.upload(req.file.path)
+        let image = new Image({
+            name: req.body.name,
+            avatar: result.secure_url,
+            cloudinary_id: result.public_id,
+            owner: req.user.id,
+            userId: req.user.id
+        });
 
-        const sig = cloudinary.utils.api_sign_request(
-            {timestamp: ts, upload_preset: 'ubw9oywd'},
-            process.env.CLOUDINARY_SECRET
-        )
+        await image.save();
+        res.json(image);
 
-        res.status(200).json({
-            sig, ts
-        })
-    }catch (err) {
-        res.status(500).json({
-            message: 'failed to sign'
-        })
+    }catch(err){
+        console.log(err)
     }
 })
+
+// router.get('/cloudsign', validateSession, async (req, res) => {
+//     try{
+//         const ts = Math.floor(new Date().getTime() / 1000).toString()
+
+//         const sig = cloudinary.utils.api_sign_request(
+//             {timestamp: ts, upload_preset: 'ubw9oywd'},
+//             process.env.CLOUDINARY_SECRET
+//         )
+
+//         res.status(200).json({
+//             sig, ts
+//         })
+//     }catch (err) {
+//         res.status(500).json({
+//             message: 'failed to sign'
+//         })
+//     }
+// })
 
 router.get('/practice', validateSession, function(req, res){
     res.send('this is a practice route');
 });
 
-router.get('/images', function(req, res){
-    res.status(200).json({
-        images: [{title: 'First image'}]
-    });
-});
 
-router.post('/post', validateSession, (req, res) => {
-    const imagePost = {
-        title: req.body.image.title,
-        imageUrl: req.body.image.imageUrl,
-        owner: req.user.id,
-        userId: req.user.id
-    }
-    Image.create(imagePost)
-    .then(image => res.status(200).json(image))
-    .catch(err => res.status(500).json({ error: err}))
-});
+// router.post('/post', validateSession, (req, res) => {
+//     const imagePost = {
+//         title: req.body.image.title,
+//         imageUrl: req.body.image.imageUrl,
+//         owner: req.user.id,
+//         userId: req.user.id
+//     }
+//     Image.create(imagePost)
+//     .then(image => res.status(200).json(image))
+//     .catch(err => res.status(500).json({ error: err}))
+// });
 
 router.get("/", (req,res) => {
     const query = {
@@ -60,37 +76,72 @@ router.get("/myposts", validateSession, function(req, res){
      where: {
          userId: req.user.id
     },  
-     include: "user",
+     include: "user"
     };
   
     Image.findAll(query)
       .then((images)=> res.status(200).json(images))
       .catch((err) => res.status(500).json({error: err}));
   });
-  
 
-router.put('/update/:entryId', validateSession, function(req, res) {
-    const updateImagePost = {
-        title: req.body.image.title,
-        imageUrl: req.body.image.imageUrl,
-        owner: req.user.id,
-        userId: req.user.id
+router.put("/edit/:id", upload.single("image"), async (req, res) => {
+    try {
+        let image = await Image.findByPk(req.params.id);
 
-    };
-
-    const query = { where: {id: req.params.entryId, owner: req.user.id}};
-
-    Image.update(updateImagePost, query)
-    .then(images => res.status(200).json(images))
-    .catch(err => res.status(500).json({error: err}))
+        await cloudinary.uploader.destroy(image.cloudinary_id);
+        let result
+        if(req.file){
+            result = await cloudinary.uploader.upload(req.file.path);
+        }
+        const data = {
+            name: req.body.name || image.name,
+            avatar: result?.secure_url || image.avatar,
+            cloudinary_id: result?.public_id || image.cloudinary_id,
+        };
+        image = await Image.update(data, {where: {id: req.params.id}}, {new: true});
+        res.json(image);
+    }catch (err) {
+        console.log(err);
+    }
 })
 
-router.delete("/delete/:id", validateSession, function(req, res) {
-    const query = { where: {id: req.params.id, owner: req.user.id}};
-
-    Image.destroy(query)
-    .then(() => res.status(200).json({ message: "Image Post Deleted"}))
-    .catch((err) => res.status(500).json({ error: err}));
+router.get("/:id", validateSession, async (req, res) => {
+    try {
+        let image = await Image.findByPk(req.params.id);
+        res.json(image);
+    }catch (err) {
+        res.status(500).json({error: err})
+    }
 })
+
+
+
+// router.put('/update/:entryId', validateSession, function(req, res) {
+//     const updateImagePost = {
+//         title: req.body.image.title,
+//         imageUrl: req.body.image.imageUrl,
+//         owner: req.user.id,
+//         userId: req.user.id
+
+//     };
+
+//     const query = { where: {id: req.params.entryId, owner: req.user.id}};
+
+//     Image.update(updateImagePost, query)
+//     .then(images => res.status(200).json(images))
+//     .catch(err => res.status(500).json({error: err}))
+// })
+
+router.delete("/delete/:id", validateSession, async (req, res) => {
+    try {
+        let image = await Image.findByPk(req.params.id);
+        await cloudinary.uploader.destroy(image.cloudinary_id);
+        await image.destroy();
+        res.json(image);
+    }catch (err){
+        console.log(err)
+    }
+})
+
 
 module.exports = router;

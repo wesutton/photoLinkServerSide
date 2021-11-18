@@ -1,4 +1,5 @@
 const router = require('express').Router();
+let validateSession = require('../middleware/validate-session');
 const User = require('../db').import('../models/user');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -50,5 +51,18 @@ router.post('/login', function (req, res) {
             }
         }).catch(err => res.status(500).json({ error: err }))
 });
+
+router.get("/user", validateSession, function(req, res){
+    const query = {
+     where: {
+         userId: req.params.id
+    },  
+     include: "user"
+    };
+  
+    User.findAll(query)
+      .then((user)=> res.status(200).json(user))
+      .catch((err) => res.status(500).json({error: err}));
+  });
 
 module.exports = router;
